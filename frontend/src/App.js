@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import * as api from './services/api';
 import './styles/App.css';
-import MapComponent from './components/MapComponent';
-import VillageView from './components/VillageView';
 import { buildingsData, troopsData, buildingKeyMap, troopKeyMap } from './gameData';
 
 function App() {
@@ -33,7 +31,7 @@ function App() {
   useEffect(() => {
     if (isLoggedIn) {
       loadVillageData();
-      const interval = setInterval(loadVillageData, 60000); // Atualizar a cada minuto
+      const interval = setInterval(loadVillageData, 60000);
       return () => clearInterval(interval);
     }
   }, [isLoggedIn]);
@@ -188,15 +186,6 @@ function App() {
     }
   };
 
-  const loadBattleHistory = async () => {
-    try {
-      const response = await api.getBattleHistory();
-      setBattleHistory(response.data.battles);
-    } catch (error) {
-      console.error('Erro ao carregar histórico:', error);
-    }
-  };
-
   const loadRankings = async (type) => {
     try {
       let response;
@@ -230,6 +219,28 @@ function App() {
       loadRankings(rankingType);
     }
   }, [rankingType]);
+
+  // Função auxiliar para obter dados do edifício
+  const getBuildingData = (buildingKey) => {
+    const lowerKey = buildingKey.toLowerCase();
+    return buildingsData[lowerKey] || buildingsData[buildingKeyMap[buildingKey]] || {
+      name: buildingKey,
+      emoji: '🏛️',
+      description: 'Edifício da aldeia'
+    };
+  };
+
+  // Função auxiliar para obter dados da tropa
+  const getTroopData = (troopKey) => {
+    const lowerKey = troopKey.toLowerCase();
+    return troopsData[lowerKey] || troopsData[troopKeyMap[troopKey]] || {
+      name: troopKey,
+      emoji: '⚔️',
+      description: 'Unidade militar',
+      attack: 0,
+      defense: 0
+    };
+  };
 
   if (!isLoggedIn) {
     return (
@@ -306,26 +317,17 @@ function App() {
       <div className="content">
         {activeTab === 'overview' && (
           <div className="overview">
-            {/* Vista 3D da Aldeia */}
-            <VillageView
-              village={village}
-              buildings={village.village.buildings}
-              onBuildingClick={(buildingKey) => {
-                handleBuild(buildingKey);
-              }}
-            />
-
-            {/* Card de Boas-vindas */}
             <div className="card">
               <h2>🏛️ Bem-vindo, {user.username}!</h2>
               <p>Nível: {village.stats.level} | EXP: {village.stats.exp}/{village.stats.level * 100}</p>
               <div className="progress-bar">
-                <div className="progress-fill" style={{width: `${(village.stats.exp / (village.stats.level * 100)) * 100}%`}}></div>
+                <div className="progress-fill" style={{width: `${(village.stats.exp / (village.stats.level * 100)) * 100}%`}}>
+                  {Math.floor((village.stats.exp / (village.stats.level * 100)) * 100)}%
+                </div>
               </div>
               <button onClick={handleClaimBonus} className="btn-primary">🎁 Coletar Bônus Diário</button>
             </div>
 
-            {/* Stats Grid */}
             <div className="stats-grid">
               <div className="stat-card">
                 <h3>⚔️ Ataques</h3>
@@ -346,86 +348,88 @@ function App() {
           </div>
         )}
 
-       {activeTab === 'buildings' && (
-  <div className="buildings-grid">
-    {Object.entries(village.village.buildings).map(([building, level]) => {
-      const buildingKey = building.toLowerCase();
-      const buildingInfo = buildingsData[buildingKey] || buildingsData[buildingKeyMap[building]];
-      
-      return (
-        <div key={building} className="building-card">
-          <div style={{fontSize: '3rem', marginBottom: '0.5rem'}}>
-            {buildingInfo?.emoji || '🏛️'}
-          </div>
-          <h3>{buildingInfo?.name || building} - Nível {level}</h3>
-          <p style={{color: '#666', fontSize: '0.9rem', marginBottom: '1rem'}}>
-            {buildingInfo?.description}
-          </p>
-          <button onClick={() => handleBuild(building)} disabled={loading}>
-            Melhorar
-          </button>
-        </div>
-      );
-    })}
-  </div>
-)}
-
-    {activeTab === 'troops' && (
-  <div className="troops-section">
-    <h2>Suas Tropas</h2>
-    <div className="troops-list">
-      {Object.entries(village.village.troops).map(([troop, count]) => {
-        const troopKey = troop.toLowerCase();
-        const troopInfo = troopsData[troopKey] || troopsData[troopKeyMap[troop]];
-        
-        return (
-          <div key={troop} className="troop-item">
-            <div style={{display: 'flex', alignItems: 'center', gap: '1rem'}}>
-              <span style={{fontSize: '2rem'}}>{troopInfo?.emoji || '⚔️'}</span>
-              <div>
-                <div><strong>{troopInfo?.name || troop}</strong></div>
-                <div style={{color: '#666', fontSize: '0.9rem'}}>
-                  Quantidade: {count}
+        {activeTab === 'buildings' && (
+          <div className="buildings-grid">
+            {Object.entries(village.village.buildings).map(([building, level]) => {
+              const buildingInfo = getBuildingData(building);
+              
+              return (
+                <div key={building} className="building-card">
+                  <div className="building-icon">{buildingInfo.emoji}</div>
+                  <h3>{buildingInfo.name}</h3>
+                  <div className="building-description">{buildingInfo.description}</div>
+                  <p style={{color: '#7d510f', fontWeight: 'bold', marginBottom: '8px'}}>
+                    Nível {level}
+                  </p>
+                  <button onClick={() => handleBuild(building)} disabled={loading}>
+                    {loading ? 'Construindo...' : 'Melhorar'}
+                  </button>
                 </div>
-              </div>
-            </div>
-            <input 
-              type="number" 
-              min="1" 
-              max="100"
-              placeholder="Treinar"
-              onChange={(e) => {
-                const amount = e.target.value;
-                if (amount) handleTrain(troop, amount);
-              }}
-            />
+              );
+            })}
           </div>
-        );
-      })}
-    </div>
-  </div>
-)}
+        )}
+
+        {activeTab === 'troops' && (
+          <div className="troops-section">
+            <h2>⚔️ Suas Tropas</h2>
+            <div className="troops-list">
+              {Object.entries(village.village.troops).map(([troop, count]) => {
+                const troopInfo = getTroopData(troop);
+                
+                return (
+                  <div key={troop} className="troop-item">
+                    <div className="troop-info">
+                      <div className="troop-icon">{troopInfo.emoji}</div>
+                      <div className="troop-details">
+                        <div className="troop-name">{troopInfo.name}</div>
+                        <div className="troop-description">{troopInfo.description}</div>
+                        <div className="troop-stats">
+                          ⚔️ Ataque: {troopInfo.attack} | 🛡️ Defesa: {troopInfo.defense}
+                        </div>
+                        <div className="troop-count">Disponível: {count}</div>
+                      </div>
+                    </div>
+                    <input 
+                      type="number" 
+                      min="1" 
+                      max="100"
+                      placeholder="Quantidade"
+                      onChange={(e) => {
+                        const amount = e.target.value;
+                        if (amount) handleTrain(troop, amount);
+                      }}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {activeTab === 'battle' && (
           <div className="battle-section">
-            <h2>Aldeias para Atacar</h2>
+            <h2>🎯 Aldeias para Atacar</h2>
             {npcVillages.map((npc, index) => (
               <div key={index} className="npc-village">
                 <h3>{npc.name} (Dificuldade: {npc.difficulty})</h3>
-                <p>Saque: {npc.loot} recursos</p>
+                <p>💰 Saque: {npc.loot} recursos</p>
                 <div className="attack-form">
-                  {Object.keys(village.village.troops).map(troop => (
-                    <input
-                      key={troop}
-                      type="number"
-                      placeholder={`${troop} (${village.village.troops[troop]})`}
-                      min="0"
-                      max={village.village.troops[troop]}
-                      onChange={(e) => setAttackTroops({...attackTroops, [troop]: parseInt(e.target.value) || 0})}
-                    />
-                  ))}
+                  {Object.keys(village.village.troops).map(troop => {
+                    const troopInfo = getTroopData(troop);
+                    return (
+                      <input
+                        key={troop}
+                        type="number"
+                        placeholder={`${troopInfo.emoji} ${troopInfo.name} (${village.village.troops[troop]})`}
+                        min="0"
+                        max={village.village.troops[troop]}
+                        onChange={(e) => setAttackTroops({...attackTroops, [troop]: parseInt(e.target.value) || 0})}
+                      />
+                    );
+                  })}
                   <button onClick={() => handleAttackNPC(index)} disabled={loading}>
-                    Atacar
+                    {loading ? 'Atacando...' : 'Atacar'}
                   </button>
                 </div>
               </div>
@@ -435,15 +439,16 @@ function App() {
 
         {activeTab === 'map' && map && (
           <div className="map-section">
-            <h2 className="section-title">🗺️ Mapa Mundial</h2>
-            
-            <MapComponent
-              myCoordinates={map.myCoordinates}
-              nearbyVillages={map.nearbyVillages}
-              onVillageClick={(village) => {
-                console.log('Aldeia clicada:', village);
-              }}
-            />
+            <h2>🗺️ Mapa (Tuas coordenadas: {map.myCoordinates.x}, {map.myCoordinates.y})</h2>
+            <div className="villages-list">
+              {map.nearbyVillages.map(village => (
+                <div key={village.id} className="nearby-village">
+                  <strong>{village.username}</strong> - {village.villageName}
+                  <br/>
+                  📍 ({village.coordinates.x}, {village.coordinates.y}) | 🏆 {village.points} pontos
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
@@ -463,7 +468,7 @@ function App() {
                 ⭐ Nível
               </button>
             </div>
-            <p>Tua posição: #{rankings.myRank}</p>
+            <p style={{marginBottom: '15px', fontWeight: 'bold'}}>Tua posição: #{rankings.myRank}</p>
             <table className="ranking-table">
               <thead>
                 <tr>
