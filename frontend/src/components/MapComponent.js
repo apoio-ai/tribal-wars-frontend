@@ -8,64 +8,12 @@ const MapComponent = ({ myCoordinates, nearbyVillages, onVillageClick }) => {
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [selectedVillage, setSelectedVillage] = useState(null);
   const [hoveredCell, setHoveredCell] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   const mapRef = useRef(null);
 
-  // Tamanho do mapa (aumentado para 100x100 para ser mais realista)
-  const MAP_SIZE = 100;
-  const CELL_SIZE = 60;
-
-  // Gerar terreno procedural
-  const generateTerrain = () => {
-    const terrain = [];
-    
-    for (let y = 0; y < MAP_SIZE; y++) {
-      for (let x = 0; x < MAP_SIZE; x++) {
-        // Usar ruído para terreno mais natural
-        const noise = (Math.sin(x * 0.1) + Math.cos(y * 0.1)) * 0.5;
-        const random = Math.random();
-        
-        let type = 'grass';
-        let emoji = '🌱';
-        let color = '#7CB342';
-        
-        // Água (rios e lagos)
-        if (noise < -0.3 && random < 0.3) {
-          type = 'water';
-          emoji = '💧';
-          color = '#2196F3';
-        }
-        // Floresta
-        else if (random < 0.25) {
-          type = 'forest';
-          emoji = '🌲';
-          color = '#388E3C';
-        }
-        // Montanhas
-        else if (noise > 0.4 && random < 0.15) {
-          type = 'mountain';
-          emoji = '⛰️';
-          color = '#795548';
-        }
-        // Deserto
-        else if (x > 60 && y > 60 && random < 0.2) {
-          type = 'desert';
-          emoji = '🏜️';
-          color = '#FFD54F';
-        }
-        
-        terrain.push({
-          x,
-          y,
-          type,
-          emoji,
-          color,
-          id: `${x}-${y}`
-        });
-      }
-    }
-    
-    return terrain;
-  };
+  // Tamanho do mapa otimizado
+  const MAP_SIZE = 50; // Reduzido para 50x50 para melhor performance
+  const CELL_SIZE = 80;
 
   // Gerar aldeias no mapa
   const generateVillages = () => {
@@ -73,8 +21,8 @@ const MapComponent = ({ myCoordinates, nearbyVillages, onVillageClick }) => {
     
     // Sua aldeia
     villages.push({
-      x: myCoordinates.x,
-      y: myCoordinates.y,
+      x: myCoordinates?.x || 25,
+      y: myCoordinates?.y || 25,
       type: 'player',
       name: 'Tua Aldeia',
       player: 'Tu',
@@ -85,8 +33,8 @@ const MapComponent = ({ myCoordinates, nearbyVillages, onVillageClick }) => {
       level: 15
     });
     
-    // Aldeias de outros jogadores (50 aldeias)
-    for (let i = 0; i < 50; i++) {
+    // Aldeias de outros jogadores (30 aldeias)
+    for (let i = 0; i < 30; i++) {
       villages.push({
         x: Math.floor(Math.random() * MAP_SIZE),
         y: Math.floor(Math.random() * MAP_SIZE),
@@ -101,8 +49,8 @@ const MapComponent = ({ myCoordinates, nearbyVillages, onVillageClick }) => {
       });
     }
     
-    // Aldeias abandonadas (30 aldeias)
-    for (let i = 0; i < 30; i++) {
+    // Aldeias abandonadas (20 aldeias)
+    for (let i = 0; i < 20; i++) {
       villages.push({
         x: Math.floor(Math.random() * MAP_SIZE),
         y: Math.floor(Math.random() * MAP_SIZE),
@@ -117,7 +65,7 @@ const MapComponent = ({ myCoordinates, nearbyVillages, onVillageClick }) => {
       });
     }
     
-    // Aldeias com bônus (20 aldeias)
+    // Aldeias com bônus (15 aldeias)
     const bonusTypes = [
       { emoji: '🌾', name: 'Fazenda Rica', bonus: 'Comida +50%' },
       { emoji: '🪵', name: 'Serraria', bonus: 'Madeira +50%' },
@@ -125,7 +73,7 @@ const MapComponent = ({ myCoordinates, nearbyVillages, onVillageClick }) => {
       { emoji: '💎', name: 'Mina de Ouro', bonus: 'Ouro +30%' }
     ];
     
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 15; i++) {
       const bonusType = bonusTypes[Math.floor(Math.random() * bonusTypes.length)];
       villages.push({
         x: Math.floor(Math.random() * MAP_SIZE),
@@ -144,29 +92,33 @@ const MapComponent = ({ myCoordinates, nearbyVillages, onVillageClick }) => {
     return villages;
   };
 
-  const [terrain] = useState(() => generateTerrain());
   const [villages] = useState(() => generateVillages());
 
   // Centralizar no jogador ao carregar
   useEffect(() => {
-    centerOnPlayer();
+    setTimeout(() => {
+      centerOnPlayer();
+      setIsLoading(false);
+    }, 100);
   }, []);
 
   const centerOnPlayer = () => {
     if (mapRef.current) {
       const mapWidth = mapRef.current.clientWidth;
       const mapHeight = mapRef.current.clientHeight;
+      const playerX = myCoordinates?.x || 25;
+      const playerY = myCoordinates?.y || 25;
       
       setOffset({
-        x: -myCoordinates.x * CELL_SIZE * zoom + mapWidth / 2,
-        y: -myCoordinates.y * CELL_SIZE * zoom + mapHeight / 2
+        x: -playerX * CELL_SIZE * zoom + mapWidth / 2,
+        y: -playerY * CELL_SIZE * zoom + mapHeight / 2
       });
     }
   };
 
   // Controles de zoom
   const handleZoomIn = () => {
-    setZoom(prev => Math.min(prev + 0.2, 3));
+    setZoom(prev => Math.min(prev + 0.2, 2.5));
   };
 
   const handleZoomOut = () => {
@@ -195,7 +147,7 @@ const MapComponent = ({ myCoordinates, nearbyVillages, onVillageClick }) => {
   const handleWheel = (e) => {
     e.preventDefault();
     const delta = e.deltaY > 0 ? -0.1 : 0.1;
-    setZoom(prev => Math.max(0.5, Math.min(3, prev + delta)));
+    setZoom(prev => Math.max(0.5, Math.min(2.5, prev + delta)));
   };
 
   // Clicar em aldeia
@@ -229,20 +181,29 @@ const MapComponent = ({ myCoordinates, nearbyVillages, onVillageClick }) => {
               />
             );
           })}
-          {/* Viewport indicator */}
-          <div
-            className="minimap-viewport"
-            style={{
-              left: -offset.x * scale / zoom,
-              top: -offset.y * scale / zoom,
-              width: (mapRef.current?.clientWidth || 800) * scale / zoom,
-              height: (mapRef.current?.clientHeight || 600) * scale / zoom
-            }}
-          />
         </div>
       </div>
     );
   };
+
+  // Renderizar terreno de fundo (simplificado - apenas cores)
+  const getTerrainColor = (x, y) => {
+    const noise = (Math.sin(x * 0.2) + Math.cos(y * 0.2)) * 0.5;
+    
+    if (noise < -0.3) return '#2196F3'; // Água
+    if (noise > 0.4) return '#795548'; // Montanhas
+    if (Math.random() < 0.2) return '#388E3C'; // Floresta
+    return '#7CB342'; // Planícies
+  };
+
+  if (isLoading) {
+    return (
+      <div className="map-loading">
+        <div className="loading-spinner">⏳</div>
+        <p>Carregando mapa...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="map-container-realistic">
@@ -270,9 +231,6 @@ const MapComponent = ({ myCoordinates, nearbyVillages, onVillageClick }) => {
           <div className="legend-item"><span className="legend-emoji">⚔️</span> Jogadores</div>
           <div className="legend-item"><span className="legend-emoji">🏚️</span> Abandonadas</div>
           <div className="legend-item"><span className="legend-emoji">🌾💎</span> Bônus</div>
-          <div className="legend-item"><span className="legend-emoji">🌲</span> Floresta</div>
-          <div className="legend-item"><span className="legend-emoji">💧</span> Água</div>
-          <div className="legend-item"><span className="legend-emoji">⛰️</span> Montanhas</div>
         </div>
       </div>
 
@@ -292,7 +250,7 @@ const MapComponent = ({ myCoordinates, nearbyVillages, onVillageClick }) => {
           <div>Jogador: {hoveredCell.village.player}</div>
           <div>📍 ({hoveredCell.village.x}, {hoveredCell.village.y})</div>
           {hoveredCell.village.points && (
-            <div>🏆 {hoveredCell.village.points} pontos</div>
+            <div>🏆 {hoveredCell.village.points.toLocaleString()} pontos</div>
           )}
           {hoveredCell.village.population !== undefined && (
             <div>👥 {hoveredCell.village.population} habitantes</div>
@@ -345,7 +303,7 @@ const MapComponent = ({ myCoordinates, nearbyVillages, onVillageClick }) => {
             {selectedVillage.resources && (
               <div className="detail-row">
                 <span className="detail-label">💰 Recursos:</span>
-                <span className="detail-value">{selectedVillage.resources}</span>
+                <span className="detail-value">{selectedVillage.resources.toLocaleString()}</span>
               </div>
             )}
             
@@ -393,29 +351,22 @@ const MapComponent = ({ myCoordinates, nearbyVillages, onVillageClick }) => {
           style={{
             transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})`,
             width: MAP_SIZE * CELL_SIZE,
-            height: MAP_SIZE * CELL_SIZE
+            height: MAP_SIZE * CELL_SIZE,
+            background: `
+              linear-gradient(45deg, #7CB342 25%, transparent 25%),
+              linear-gradient(-45deg, #7CB342 25%, transparent 25%),
+              linear-gradient(45deg, transparent 75%, #7CB342 75%),
+              linear-gradient(-45deg, transparent 75%, #7CB342 75%)
+            `,
+            backgroundSize: '40px 40px',
+            backgroundPosition: '0 0, 0 20px, 20px -20px, -20px 0px',
+            backgroundColor: '#8BC34A'
           }}
         >
-          {/* Renderizar terreno */}
-          {terrain.map((cell) => (
-            <div
-              key={cell.id}
-              className={`terrain-cell ${cell.type}`}
-              style={{
-                left: cell.x * CELL_SIZE,
-                top: cell.y * CELL_SIZE,
-                width: CELL_SIZE,
-                height: CELL_SIZE,
-                backgroundColor: cell.color
-              }}
-            >
-              <span className="terrain-emoji">{cell.emoji}</span>
-            </div>
-          ))}
-
           {/* Renderizar aldeias */}
           {villages.map((village, index) => {
             const style = {
+              position: 'absolute',
               left: village.x * CELL_SIZE,
               top: village.y * CELL_SIZE,
               width: CELL_SIZE,
