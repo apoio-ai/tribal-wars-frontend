@@ -74,7 +74,7 @@ const VillageView = ({ village, buildings, onBuildingClick }) => {
   };
 
   const handleBuildingClick = (buildingKey, buildingInfo) => {
-    const level = village?.buildings[buildingKey] || 0;
+    const level = buildings?.[buildingKey] || 0;
     setSelectedBuilding({ ...buildingInfo, key: buildingKey, level });
     if (onBuildingClick) {
       onBuildingClick(buildingKey);
@@ -127,7 +127,7 @@ const VillageView = ({ village, buildings, onBuildingClick }) => {
         {/* Edifícios */}
         <div className="buildings-layer">
           {Object.entries(buildingsData).map(([buildingKey, buildingInfo]) => {
-            const level = village?.buildings[buildingKey] || 0;
+            const level = buildings?.[buildingKey] || 0;
             const scale = getBuildingScale(buildingInfo.size, level);
             const isHovered = hoveredBuilding === buildingKey;
             const isSelected = selectedBuilding?.key === buildingKey;
