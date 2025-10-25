@@ -1007,54 +1007,19 @@ function App() {
           </div>
         )}
 
-        {activeTab === 'map' && map && (
-          <div className="map-section">
-            <h2 className="section-title">🗺️ Mapa Mundial</h2>
-            
-            <div className="map-info">
-              <p>📍 Tuas coordenadas: <strong>({map.myCoordinates.x}, {map.myCoordinates.y})</strong></p>
-              <div className="map-legend">
-                <span><span className="legend-icon">🏰</span> Tua Aldeia</span>
-                <span><span className="legend-icon">⚔️</span> Jogadores</span>
-                <span><span className="legend-icon">🏚️</span> Abandonadas</span>
-                <span><span className="legend-icon">🌾</span> Bônus</span>
-                <span><span className="legend-icon">🌳</span> Vazio</span>
-              </div>
-            </div>
-
-            {selectedMapCell && (
-              <div className="map-cell-details">
-                <h3>Detalhes da Célula ({selectedMapCell.x}, {selectedMapCell.y})</h3>
-                {selectedMapCell.type === 'player' && (
-                  <p>🏰 Aldeia de <strong>{selectedMapCell.player}</strong></p>
-                )}
-                {selectedMapCell.type === 'enemy' && (
-                  <p>⚔️ Aldeia de <strong>{selectedMapCell.player}</strong> - Clique para atacar!</p>
-                )}
-                {selectedMapCell.type === 'abandoned' && (
-                  <p>🏚️ Aldeia Abandonada - {selectedMapCell.resources} recursos disponíveis</p>
-                )}
-                {selectedMapCell.type === 'bonus' && (
-                  <p>{selectedMapCell.emoji} Aldeia com Bônus Especial!</p>
-                )}
-                <button onClick={() => setSelectedMapCell(null)} className="btn-close">Fechar</button>
-              </div>
-            )}
-
-            <div className="map-grid">
-              {map.grid && map.grid.map((cell, index) => (
-                <div
-                  key={index}
-                  className={`map-cell ${cell.type}`}
-                  onClick={() => setSelectedMapCell(cell)}
-                  title={`(${cell.x}, ${cell.y}) ${cell.player || ''}`}
-                >
-                  {cell.emoji}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+       {activeTab === 'map' && map && (
+  <div className="map-section">
+    <h2 className="section-title">🗺️ Mapa Mundial</h2>
+    
+    <MapComponent
+      myCoordinates={map.myCoordinates}
+      nearbyVillages={map.nearbyVillages}
+      onVillageClick={(village) => {
+        console.log('Aldeia clicada:', village);
+      }}
+    />
+  </div>
+)}
 
         {activeTab === 'ranking' && rankings && (
           <div className="ranking-section">
