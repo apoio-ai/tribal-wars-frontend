@@ -305,6 +305,13 @@ function App() {
 
       <div className="content">
         {activeTab === 'overview' && (
+              <VillageView
+      village={village}
+      buildings={village.village.buildings}
+      onBuildingClick={(buildingKey) => {
+        handleBuild(buildingKey);
+      }}
+    />
           <div className="overview">
             <div className="card">
               <h2>🏛️ Bem-vindo, {user.username}!</h2>
