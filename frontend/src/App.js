@@ -23,15 +23,27 @@ function App() {
   const [npcVillages, setNPCVillages] = useState([]);
   const [battleHistory, setBattleHistory] = useState([]);
   const [attackTroops, setAttackTroops] = useState({});
+  const [selectedNPC, setSelectedNPC] = useState(null);
+  const [lastBattleReport, setLastBattleReport] = useState(null);
+
+  // Timers
+  const [currentTime, setCurrentTime] = useState(Date.now());
 
   useEffect(() => {
     checkAuth();
+    
+    // Atualizar relógio a cada segundo
+    const clockInterval = setInterval(() => {
+      setCurrentTime(Date.now());
+    }, 1000);
+
+    return () => clearInterval(clockInterval);
   }, []);
 
   useEffect(() => {
     if (isLoggedIn) {
       loadVillageData();
-      const interval = setInterval(loadVillageData, 60000);
+      const interval = setInterval(loadVillageData, 30000); // A cada 30 segundos
       return () => clearInterval(interval);
     }
   }, [isLoggedIn]);
@@ -69,7 +81,7 @@ function App() {
       localStorage.setItem('token', response.data.token);
       setUser(response.data.user);
       setIsLoggedIn(true);
-      showNotification('Login bem-sucedido! 🎉');
+      showNotification('Bem-vindo ao Tribal Wars! ⚔️', 'success');
     } catch (error) {
       showNotification('Erro no login: ' + (error.response?.data?.error || 'Erro desconhecido'), 'error');
     } finally {
@@ -89,7 +101,7 @@ function App() {
       localStorage.setItem('token', response.data.token);
       setUser(response.data.user);
       setIsLoggedIn(true);
-      showNotification('Conta criada com sucesso! Bem-vindo! 🎉');
+      showNotification('Conta criada! Boa sorte na conquista! 🏰', 'success');
     } catch (error) {
       showNotification('Erro no registro: ' + (error.response?.data?.error || 'Erro desconhecido'), 'error');
     } finally {
@@ -102,19 +114,19 @@ function App() {
     setIsLoggedIn(false);
     setUser(null);
     setVillage(null);
-    showNotification('Logout realizado!');
+    showNotification('Até breve, guerreiro!', 'info');
   };
 
   const showNotification = (message, type = 'success') => {
     setNotification({ message, type });
-    setTimeout(() => setNotification(null), 3000);
+    setTimeout(() => setNotification(null), 4000);
   };
 
   const handleBuild = async (building) => {
     try {
       setLoading(true);
       const response = await api.buildBuilding(building);
-      showNotification(response.data.message);
+      showNotification(response.data.message, 'success');
       await loadVillageData();
     } catch (error) {
       showNotification(error.response?.data?.error || 'Erro ao construir', 'error');
@@ -127,7 +139,7 @@ function App() {
     try {
       setLoading(true);
       const response = await api.trainTroops(troop, parseInt(amount));
-      showNotification(response.data.message);
+      showNotification(response.data.message, 'success');
       await loadVillageData();
     } catch (error) {
       showNotification(error.response?.data?.error || 'Erro ao treinar', 'error');
@@ -145,8 +157,10 @@ function App() {
     try {
       setLoading(true);
       const response = await api.attackNPC(villageIndex, attackTroops);
-      showNotification(response.data.message);
+      setLastBattleReport(response.data.battle);
+      showNotification(response.data.message, response.data.battle.winner === 'attacker' ? 'success' : 'error');
       setAttackTroops({});
+      setSelectedNPC(null);
       await loadVillageData();
     } catch (error) {
       showNotification(error.response?.data?.error || 'Erro na batalha', 'error');
@@ -159,7 +173,7 @@ function App() {
     try {
       setLoading(true);
       const response = await api.claimDailyBonus();
-      showNotification(response.data.message);
+      showNotification(response.data.message + ` Streak: ${response.data.streak} dias!`, 'success');
       await loadVillageData();
     } catch (error) {
       showNotification(error.response?.data?.error || 'Erro ao coletar bônus', 'error');
@@ -220,6 +234,24 @@ function App() {
     }
   }, [rankingType]);
 
+  // Função para calcular tempo restante
+  const getTimeRemaining = (completesAt) => {
+    const now = currentTime;
+    const remaining = new Date(completesAt).getTime() - now;
+    
+    if (remaining <= 0) return 'Concluído!';
+    
+    const seconds = Math.floor((remaining / 1000) % 60);
+    const minutes = Math.floor((remaining / 1000 / 60) % 60);
+    const hours = Math.floor((remaining / (1000 * 60 * 60)) % 24);
+    const days = Math.floor(remaining / (1000 * 60 * 60 * 24));
+    
+    if (days > 0) return `${days}d ${hours}h ${minutes}m`;
+    if (hours > 0) return `${hours}h ${minutes}m ${seconds}s`;
+    if (minutes > 0) return `${minutes}m ${seconds}s`;
+    return `${seconds}s`;
+  };
+
   // Função auxiliar para obter dados do edifício
   const getBuildingData = (buildingKey) => {
     const lowerKey = buildingKey.toLowerCase();
@@ -242,6 +274,31 @@ function App() {
     };
   };
 
+  // Calcular custo de construção
+  const calculateBuildCost = (building, level) => {
+    const baseCosts = {
+      headquarters: { wood: 100, clay: 150, iron: 50 },
+      barracks: { wood: 200, clay: 170, iron: 90 },
+      lumbermill: { wood: 80, clay: 100, iron: 30 },
+      claypit: { wood: 100, clay: 80, iron: 30 },
+      ironmine: { wood: 100, clay: 80, iron: 50 },
+      warehouse: { wood: 130, clay: 160, iron: 90 },
+      farm: { wood: 100, clay: 80, iron: 40 },
+      market: { wood: 200, clay: 150, iron: 150 },
+      workshop: { wood: 300, clay: 200, iron: 250 },
+      wall: { wood: 150, clay: 200, iron: 100 }
+    };
+
+    const base = baseCosts[building] || { wood: 100, clay: 100, iron: 50 };
+    const multiplier = 1.26;
+    
+    return {
+      wood: Math.floor(base.wood * Math.pow(multiplier, level)),
+      clay: Math.floor(base.clay * Math.pow(multiplier, level)),
+      iron: Math.floor(base.iron * Math.pow(multiplier, level))
+    };
+  };
+
   if (!isLoggedIn) {
     return (
       <div className="login-container">
@@ -252,7 +309,7 @@ function App() {
               <input type="email" name="email" placeholder="Email" required />
               <input type="password" name="password" placeholder="Password" required />
               <button type="submit" disabled={loading}>
-                {loading ? 'Entrando...' : 'ENTRAR'}
+                {loading ? 'A ENTRAR...' : 'ENTRAR'}
               </button>
               <p className="switch-text">
                 Não tens conta? <span onClick={() => setIsRegistering(true)}>Regista-te</span>
@@ -260,14 +317,14 @@ function App() {
             </form>
           ) : (
             <form onSubmit={handleRegister}>
-              <input type="text" name="username" placeholder="Username" required />
+              <input type="text" name="username" placeholder="Username (3-20 caracteres)" required minLength="3" maxLength="20" />
               <input type="email" name="email" placeholder="Email" required />
-              <input type="password" name="password" placeholder="Password" required />
+              <input type="password" name="password" placeholder="Password (mín. 6 caracteres)" required minLength="6" />
               <button type="submit" disabled={loading}>
-                {loading ? 'Criando...' : 'CRIAR CONTA'}
+                {loading ? 'A CRIAR...' : 'CRIAR CONTA'}
               </button>
               <p className="switch-text">
-                Já tens conta? <span onClick={() => setIsRegistering(false)}>Entra</span>
+                Já tens conta? <span onClick={() => setIsRegistering(false)}>Entra aqui</span>
               </p>
             </form>
           )}
@@ -277,7 +334,7 @@ function App() {
   }
 
   if (!village) {
-    return <div className="loading">Carregando aldeia...</div>;
+    return <div className="loading">A carregar aldeia...</div>;
   }
 
   return (
@@ -299,27 +356,48 @@ function App() {
       </header>
 
       <div className="resources-bar">
-        <div className="resource">🪵 Madeira: {Math.floor(village.village.resources.wood)}</div>
-        <div className="resource">🏺 Argila: {Math.floor(village.village.resources.clay)}</div>
-        <div className="resource">⚒️ Ferro: {Math.floor(village.village.resources.iron)}</div>
-        <div className="resource">💎 Ouro: {village.village.resources.gold}</div>
+        <div className="resource">
+          <span>🪵</span> Madeira: <strong>{Math.floor(village.village.resources.wood)}</strong>
+        </div>
+        <div className="resource">
+          <span>🏺</span> Argila: <strong>{Math.floor(village.village.resources.clay)}</strong>
+        </div>
+        <div className="resource">
+          <span>⚒️</span> Ferro: <strong>{Math.floor(village.village.resources.iron)}</strong>
+        </div>
+        <div className="resource">
+          <span>💎</span> Ouro: <strong>{village.village.resources.gold}</strong>
+        </div>
       </div>
 
       <div className="tabs">
-        <button className={activeTab === 'overview' ? 'active' : ''} onClick={() => setActiveTab('overview')}>🏠 Visão Geral</button>
-        <button className={activeTab === 'buildings' ? 'active' : ''} onClick={() => setActiveTab('buildings')}>🏰 Edifícios</button>
-        <button className={activeTab === 'troops' ? 'active' : ''} onClick={() => setActiveTab('troops')}>⚔️ Tropas</button>
-        <button className={activeTab === 'battle' ? 'active' : ''} onClick={() => setActiveTab('battle')}>🎯 Batalha</button>
-        <button className={activeTab === 'map' ? 'active' : ''} onClick={() => setActiveTab('map')}>🗺️ Mapa</button>
-        <button className={activeTab === 'ranking' ? 'active' : ''} onClick={() => setActiveTab('ranking')}>🏆 Rankings</button>
+        <button className={activeTab === 'overview' ? 'active' : ''} onClick={() => setActiveTab('overview')}>
+          🏠 Visão Geral
+        </button>
+        <button className={activeTab === 'buildings' ? 'active' : ''} onClick={() => setActiveTab('buildings')}>
+          🏰 Edifícios
+        </button>
+        <button className={activeTab === 'troops' ? 'active' : ''} onClick={() => setActiveTab('troops')}>
+          ⚔️ Tropas
+        </button>
+        <button className={activeTab === 'battle' ? 'active' : ''} onClick={() => setActiveTab('battle')}>
+          🎯 Batalha
+        </button>
+        <button className={activeTab === 'map' ? 'active' : ''} onClick={() => setActiveTab('map')}>
+          🗺️ Mapa
+        </button>
+        <button className={activeTab === 'ranking' ? 'active' : ''} onClick={() => setActiveTab('ranking')}>
+          🏆 Rankings
+        </button>
       </div>
 
       <div className="content">
+        {/* ========== VISÃO GERAL ========== */}
         {activeTab === 'overview' && (
           <div className="overview">
             <div className="card">
-              <h2>🏛️ Bem-vindo, {user.username}!</h2>
-              <p>Nível: {village.stats.level} | EXP: {village.stats.exp}/{village.stats.level * 100}</p>
+              <h2>🏛️ Bem-vindo à tua aldeia, {user.username}!</h2>
+              <p><strong>Nível:</strong> {village.stats.level} | <strong>EXP:</strong> {village.stats.exp}/{village.stats.level * 100}</p>
               <div className="progress-bar">
                 <div className="progress-fill" style={{width: `${(village.stats.exp / (village.stats.level * 100)) * 100}%`}}>
                   {Math.floor((village.stats.exp / (village.stats.level * 100)) * 100)}%
@@ -328,132 +406,347 @@ function App() {
               <button onClick={handleClaimBonus} className="btn-primary">🎁 Coletar Bônus Diário</button>
             </div>
 
-            <div className="stats-grid">
-              <div className="stat-card">
-                <h3>⚔️ Ataques</h3>
-                <p>Vitórias: {village.stats.attacksWon}</p>
-                <p>Derrotas: {village.stats.attacksLost}</p>
-              </div>
-              <div className="stat-card">
-                <h3>🛡️ Defesas</h3>
-                <p>Vitórias: {village.stats.defensesWon}</p>
-                <p>Derrotas: {village.stats.defensesLost}</p>
-              </div>
-              <div className="stat-card">
-                <h3>💀 Tropas</h3>
-                <p>Mortas: {village.stats.troopsKilled}</p>
-                <p>Perdidas: {village.stats.troopsLost}</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'buildings' && (
-          <div className="buildings-grid">
-            {Object.entries(village.village.buildings).map(([building, level]) => {
-              const buildingInfo = getBuildingData(building);
-              
-              return (
-                <div key={building} className="building-card">
-                  <div className="building-icon">{buildingInfo.emoji}</div>
-                  <h3>{buildingInfo.name}</h3>
-                  <div className="building-description">{buildingInfo.description}</div>
-                  <p style={{color: '#7d510f', fontWeight: 'bold', marginBottom: '8px'}}>
-                    Nível {level}
-                  </p>
-                  <button onClick={() => handleBuild(building)} disabled={loading}>
-                    {loading ? 'Construindo...' : 'Melhorar'}
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {activeTab === 'troops' && (
-          <div className="troops-section">
-            <h2>⚔️ Suas Tropas</h2>
-            <div className="troops-list">
-              {Object.entries(village.village.troops).map(([troop, count]) => {
-                const troopInfo = getTroopData(troop);
-                
-                return (
-                  <div key={troop} className="troop-item">
-                    <div className="troop-info">
-                      <div className="troop-icon">{troopInfo.emoji}</div>
-                      <div className="troop-details">
-                        <div className="troop-name">{troopInfo.name}</div>
-                        <div className="troop-description">{troopInfo.description}</div>
-                        <div className="troop-stats">
-                          ⚔️ Ataque: {troopInfo.attack} | 🛡️ Defesa: {troopInfo.defense}
+            {/* Fila de Construção */}
+            {village.village.buildQueue && village.village.buildQueue.length > 0 && (
+              <div className="build-queue">
+                <h3>🔨 Fila de Construção</h3>
+                {village.village.buildQueue.map((item, index) => {
+                  const buildingInfo = getBuildingData(item.building);
+                  return (
+                    <div key={index} className="queue-item">
+                      <div className="queue-item-info">
+                        <span className="queue-icon">{buildingInfo.emoji}</span>
+                        <div className="queue-details">
+                          <strong>{buildingInfo.name}</strong> → Nível {item.level}
                         </div>
-                        <div className="troop-count">Disponível: {count}</div>
+                      </div>
+                      <div className="queue-timer">
+                        ⏱️ {getTimeRemaining(item.completesAt)}
                       </div>
                     </div>
-                    <input 
-                      type="number" 
-                      min="1" 
-                      max="100"
-                      placeholder="Quantidade"
-                      onChange={(e) => {
-                        const amount = e.target.value;
-                        if (amount) handleTrain(troop, amount);
-                      }}
-                    />
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Fila de Tropas */}
+            {village.village.troopQueue && village.village.troopQueue.length > 0 && (
+              <div className="build-queue">
+                <h3>⚔️ Fila de Treino</h3>
+                {village.village.troopQueue.map((item, index) => {
+                  const troopInfo = getTroopData(item.troop);
+                  return (
+                    <div key={index} className="queue-item">
+                      <div className="queue-item-info">
+                        <span className="queue-icon">{troopInfo.emoji}</span>
+                        <div className="queue-details">
+                          <strong>{item.amount}x {troopInfo.name}</strong>
+                        </div>
+                      </div>
+                      <div className="queue-timer">
+                        ⏱️ {getTimeRemaining(item.completesAt)}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            <div className="stats-grid">
+              <div className="stat-card">
+                <h3>⚔️ Estatísticas de Ataque</h3>
+                <p>Vitórias: <strong>{village.stats.attacksWon}</strong></p>
+                <p>Derrotas: <strong>{village.stats.attacksLost}</strong></p>
+                <p>Tropas eliminadas: <strong>{village.stats.troopsKilled}</strong></p>
+              </div>
+              <div className="stat-card">
+                <h3>🛡️ Estatísticas de Defesa</h3>
+                <p>Vitórias: <strong>{village.stats.defensesWon}</strong></p>
+                <p>Derrotas: <strong>{village.stats.defensesLost}</strong></p>
+                <p>Tropas perdidas: <strong>{village.stats.troopsLost}</strong></p>
+              </div>
+              <div className="stat-card">
+                <h3>💰 Economia</h3>
+                <p>Recursos saqueados: <strong>{village.stats.resourcesLooted}</strong></p>
+                <p>Aldeias conquistadas: <strong>{village.conqueredVillages?.length || 0}</strong></p>
+              </div>
             </div>
           </div>
         )}
 
-        {activeTab === 'battle' && (
-          <div className="battle-section">
-            <h2>🎯 Aldeias para Atacar</h2>
-            {npcVillages.map((npc, index) => (
-              <div key={index} className="npc-village">
-                <h3>{npc.name} (Dificuldade: {npc.difficulty})</h3>
-                <p>💰 Saque: {npc.loot} recursos</p>
-                <div className="attack-form">
-                  {Object.keys(village.village.troops).map(troop => {
-                    const troopInfo = getTroopData(troop);
-                    return (
-                      <input
-                        key={troop}
-                        type="number"
-                        placeholder={`${troopInfo.emoji} ${troopInfo.name} (${village.village.troops[troop]})`}
-                        min="0"
-                        max={village.village.troops[troop]}
-                        onChange={(e) => setAttackTroops({...attackTroops, [troop]: parseInt(e.target.value) || 0})}
-                      />
-                    );
-                  })}
-                  <button onClick={() => handleAttackNPC(index)} disabled={loading}>
-                    {loading ? 'Atacando...' : 'Atacar'}
-                  </button>
-                </div>
-              </div>
-            ))}
+        {/* ========== EDIFÍCIOS ========== */}
+        {activeTab === 'buildings' && (
+          <div>
+            <h2 style={{color: '#7d510f', marginBottom: '15px', fontSize: '1.4rem', fontWeight: 'bold'}}>
+              🏰 Edifícios da Aldeia
+            </h2>
+            
+            <table className="buildings-table">
+              <thead>
+                <tr>
+                  <th>Edifício</th>
+                  <th>Nome</th>
+                  <th>Descrição</th>
+                  <th>Nível</th>
+                  <th>Custo</th>
+                  <th>Ação</th>
+                </tr>
+              </thead>
+              <tbody>
+                {Object.entries(village.village.buildings).map(([building, level]) => {
+                  const buildingInfo = getBuildingData(building);
+                  const cost = calculateBuildCost(building, level);
+                  const canAfford = village.village.resources.wood >= cost.wood &&
+                                   village.village.resources.clay >= cost.clay &&
+                                   village.village.resources.iron >= cost.iron;
+                  const isBuilding = village.village.buildQueue?.some(b => b.building === building);
+                  
+                  return (
+                    <tr key={building}>
+                      <td className="building-icon-cell">{buildingInfo.emoji}</td>
+                      <td><strong>{buildingInfo.name}</strong></td>
+                      <td>{buildingInfo.description}</td>
+                      <td className="building-level">Nível {level}</td>
+                      <td style={{fontSize: '10px'}}>
+                        🪵 {cost.wood} | 🏺 {cost.clay} | ⚒️ {cost.iron}
+                      </td>
+                      <td>
+                        <button 
+                          onClick={() => handleBuild(building)} 
+                          disabled={loading || !canAfford || isBuilding}
+                          className="btn-build"
+                        >
+                          {isBuilding ? '🔨 Construindo...' : 'Melhorar'}
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         )}
 
-        {activeTab === 'map' && map && (
-          <div className="map-section">
-            <h2>🗺️ Mapa (Tuas coordenadas: {map.myCoordinates.x}, {map.myCoordinates.y})</h2>
-            <div className="villages-list">
-              {map.nearbyVillages.map(village => (
-                <div key={village.id} className="nearby-village">
-                  <strong>{village.username}</strong> - {village.villageName}
-                  <br/>
-                  📍 ({village.coordinates.x}, {village.coordinates.y}) | 🏆 {village.points} pontos
+        {/* ========== TROPAS ========== */}
+        {activeTab === 'troops' && (
+          <div className="troops-section">
+            <h2>⚔️ Tropas e Treino</h2>
+            
+            <table className="troops-table">
+              <thead>
+                <tr>
+                  <th>Tropa</th>
+                  <th>Nome</th>
+                  <th>Estatísticas</th>
+                  <th>Disponível</th>
+                  <th>Quantidade</th>
+                  <th>Ação</th>
+                </tr>
+              </thead>
+              <tbody>
+                {Object.entries(village.village.troops).map(([troop, count]) => {
+                  const troopInfo = getTroopData(troop);
+                  
+                  return (
+                    <tr key={troop}>
+                      <td className="troop-icon-cell">{troopInfo.emoji}</td>
+                      <td><strong>{troopInfo.name}</strong></td>
+                      <td className="troop-stats">
+                        ⚔️ {troopInfo.attack} | 🛡️ {troopInfo.defense}
+                      </td>
+                      <td className="troop-count">{count}</td>
+                      <td>
+                        <input 
+                          type="number" 
+                          min="1" 
+                          max="100"
+                          placeholder="Qtd"
+                          className="train-input"
+                          id={`train-${troop}`}
+                        />
+                      </td>
+                      <td>
+                        <button 
+                          className="btn-train"
+                          onClick={() => {
+                            const amount = document.getElementById(`train-${troop}`).value;
+                            if (amount && amount > 0) {
+                              handleTrain(troop, amount);
+                              document.getElementById(`train-${troop}`).value = '';
+                            }
+                          }}
+                        >
+                          Treinar
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* ========== BATALHA ========== */}
+        {activeTab === 'battle' && (
+          <div className="battle-section">
+            <h2>🎯 Centro de Batalha</h2>
+            
+            {lastBattleReport && (
+              <div className="battle-report">
+                <h3>📜 Relatório de Batalha</h3>
+                <div className={`battle-result ${lastBattleReport.winner === 'attacker' ? 'victory' : 'defeat'}`}>
+                  {lastBattleReport.winner === 'attacker' ? '🎉 VITÓRIA!' : '😢 DERROTA'}
+                </div>
+                
+                <div className="battle-details">
+                  <div className="battle-side">
+                    <h4>👤 Atacante</h4>
+                    <div className="battle-losses">
+                      <p><strong>Poder de Ataque:</strong> {lastBattleReport.attackPower}</p>
+                      <p><strong>Perdas:</strong></p>
+                      {Object.entries(lastBattleReport.attackerLosses).map(([troop, losses]) => (
+                        losses > 0 && <p key={troop}>• {getTroopData(troop).name}: {losses}</p>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <div className="battle-side">
+                    <h4>🛡️ Defensor</h4>
+                    <div className="battle-losses">
+                      <p><strong>Poder de Defesa:</strong> {lastBattleReport.defensePower}</p>
+                      <p><strong>Perdas:</strong></p>
+                      {Object.entries(lastBattleReport.defenderLosses).map(([troop, losses]) => (
+                        losses > 0 && <p key={troop}>• {getTroopData(troop).name}: {losses}</p>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                
+                {lastBattleReport.loot && lastBattleReport.winner === 'attacker' && (
+                  <div className="battle-loot">
+                    <h4>💰 Saque Obtido</h4>
+                    <p>
+                      🪵 {lastBattleReport.loot.wood} | 
+                      🏺 {lastBattleReport.loot.clay} | 
+                      ⚒️ {lastBattleReport.loot.iron} | 
+                      💎 {lastBattleReport.loot.gold}
+                    </p>
+                  </div>
+                )}
+                
+                <button 
+                  className="btn-primary" 
+                  onClick={() => setLastBattleReport(null)}
+                  style={{width: '100%', marginTop: '15px'}}
+                >
+                  Fechar Relatório
+                </button>
+              </div>
+            )}
+            
+            <div className="npc-villages-grid">
+              {npcVillages.map((npc, index) => (
+                <div key={index} className="npc-village-card">
+                  <h3>
+                    {npc.name}
+                    <span className={`difficulty-badge difficulty-${npc.difficulty}`}>
+                      Nível {npc.difficulty}
+                    </span>
+                  </h3>
+                  <p><strong>💰 Saque:</strong> {npc.loot} recursos</p>
+                  <p><strong>🛡️ Defesas:</strong> 
+                    {Object.entries(npc.troops).map(([troop, count]) => (
+                      ` ${count}x ${getTroopData(troop).emoji}`
+                    ))}
+                  </p>
+                  
+                  {selectedNPC === index ? (
+                    <div className="attack-form">
+                      {Object.keys(village.village.troops).map(troop => {
+                        const troopInfo = getTroopData(troop);
+                        return (
+                          <input
+                            key={troop}
+                            type="number"
+                            className="attack-input"
+                            placeholder={`${troopInfo.emoji} ${troopInfo.name} (${village.village.troops[troop]})`}
+                            min="0"
+                            max={village.village.troops[troop]}
+                            value={attackTroops[troop] || ''}
+                            onChange={(e) => setAttackTroops({
+                              ...attackTroops, 
+                              [troop]: parseInt(e.target.value) || 0
+                            })}
+                          />
+                        );
+                      })}
+                      <button 
+                        onClick={() => handleAttackNPC(index)} 
+                        disabled={loading}
+                        className="btn-attack"
+                      >
+                        {loading ? '⚔️ Atacando...' : '⚔️ ATACAR'}
+                      </button>
+                      <button 
+                        onClick={() => {
+                          setSelectedNPC(null);
+                          setAttackTroops({});
+                        }}
+                        className="btn-primary"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  ) : (
+                    <button 
+                      onClick={() => setSelectedNPC(index)}
+                      className="btn-primary"
+                      style={{width: '100%', marginTop: '10px'}}
+                    >
+                      Selecionar Tropas
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
           </div>
         )}
 
+        {/* ========== MAPA ========== */}
+        {activeTab === 'map' && map && (
+          <div className="map-section">
+            <h2>🗺️ Mapa Mundial</h2>
+            <p style={{marginBottom: '15px', color: '#603000'}}>
+              <strong>📍 Tuas coordenadas:</strong> ({map.myCoordinates.x}, {map.myCoordinates.y})
+            </p>
+            
+            <div className="villages-grid">
+              {map.nearbyVillages.map(village => (
+                <div key={village.id} className="village-card">
+                  <strong>👤 {village.username}</strong>
+                  <div className="village-card-info">
+                    🏘️ {village.villageName}
+                  </div>
+                  <div className="village-card-info">
+                    📍 ({village.coordinates.x}, {village.coordinates.y})
+                  </div>
+                  <div className="village-card-info">
+                    🏆 {village.points} pontos
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ========== RANKINGS ========== */}
         {activeTab === 'ranking' && rankings && (
           <div className="ranking-section">
+            <h2 style={{color: '#7d510f', marginBottom: '15px', fontSize: '1.4rem', fontWeight: 'bold'}}>
+              🏆 Rankings Globais
+            </h2>
+            
             <div className="ranking-tabs">
               <button onClick={() => setRankingType('points')} className={rankingType === 'points' ? 'active' : ''}>
                 🏆 Pontos
@@ -468,21 +761,39 @@ function App() {
                 ⭐ Nível
               </button>
             </div>
-            <p style={{marginBottom: '15px', fontWeight: 'bold'}}>Tua posição: #{rankings.myRank}</p>
+            
+            <p style={{marginBottom: '15px', fontWeight: 'bold', color: '#7d510f'}}>
+              Tua posição: <strong style={{fontSize: '1.2rem'}}>#{rankings.myRank}</strong>
+            </p>
+            
             <table className="ranking-table">
               <thead>
                 <tr>
                   <th>Posição</th>
                   <th>Jogador</th>
-                  <th>Valor</th>
+                  <th>
+                    {rankingType === 'points' && 'Pontos'}
+                    {rankingType === 'attackers' && 'Ataques Vencidos'}
+                    {rankingType === 'defenders' && 'Defesas Vencidas'}
+                    {rankingType === 'level' && 'Nível'}
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {rankings.ranking.map(player => (
                   <tr key={player.rank}>
-                    <td>{player.rank}</td>
-                    <td>{player.username}</td>
-                    <td>{player.points || player.attacksWon || player.defensesWon || player.level}</td>
+                    <td className="rank-position">
+                      {player.rank === 1 && <span className="rank-gold">🥇</span>}
+                      {player.rank === 2 && <span className="rank-silver">🥈</span>}
+                      {player.rank === 3 && <span className="rank-bronze">🥉</span>}
+                      {player.rank > 3 && player.rank}
+                    </td>
+                    <td><strong>{player.username}</strong></td>
+                    <td>
+                      <strong>
+                        {player.points || player.attacksWon || player.defensesWon || player.level}
+                      </strong>
+                    </td>
                   </tr>
                 ))}
               </tbody>
