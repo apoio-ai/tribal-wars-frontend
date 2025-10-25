@@ -1,0 +1,925 @@
+/* ========== VILLAGE VIEW CONTAINER ========== */
+.village-view-container {
+  position: relative;
+  width: 100%;
+  height: 800px;
+  overflow: hidden;
+  border-radius: 20px;
+  background: linear-gradient(180deg, #87CEEB 0%, #E0F6FF 50%, #90EE90 100%);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  border: 3px solid rgba(233, 69, 96, 0.3);
+}
+
+/* ========== BACKGROUND ========== */
+.village-background {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+.sky-gradient {
+  position: absolute;
+  width: 100%;
+  height: 50%;
+  background: linear-gradient(180deg, #1e40af 0%, #3b82f6 30%, #87CEEB 100%);
+}
+
+.mountains {
+  position: absolute;
+  bottom: 30%;
+  left: 0;
+  right: 0;
+  height: 200px;
+  background: 
+    linear-gradient(135deg, transparent 50%, #64748b 50%, #475569 55%, transparent 55%),
+    linear-gradient(225deg, transparent 50%, #64748b 50%, #475569 55%, transparent 55%);
+  background-size: 200px 200px;
+  background-position: 0 0, 100px 0;
+  opacity: 0.3;
+}
+
+.clouds {
+  position: absolute;
+  width: 100%;
+  height: 40%;
+  z-index: 2;
+}
+
+.cloud {
+  position: absolute;
+  font-size: 3rem;
+  opacity: 0.7;
+  animation: float 20s ease-in-out infinite;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.cloud-1 {
+  left: 10%;
+  top: 10%;
+  animation-delay: 0s;
+}
+
+.cloud-2 {
+  left: 60%;
+  top: 5%;
+  animation-delay: -7s;
+}
+
+.cloud-3 {
+  left: 35%;
+  top: 15%;
+  animation-delay: -14s;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateX(0) translateY(0);
+  }
+  25% {
+    transform: translateX(30px) translateY(-10px);
+  }
+  50% {
+    transform: translateX(60px) translateY(0);
+  }
+  75% {
+    transform: translateX(30px) translateY(10px);
+  }
+}
+
+/* ========== VILLAGE SCENE ========== */
+.village-scene {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+}
+
+.village-ground {
+  position: absolute;
+  width: 90%;
+  height: 70%;
+  left: 5%;
+  top: 20%;
+  background: 
+    radial-gradient(circle at 30% 40%, #7CB342 0%, #689F38 50%, #558B2F 100%);
+  border-radius: 20px;
+  box-shadow: 
+    inset 0 0 50px rgba(0, 0, 0, 0.1),
+    0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+/* ========== CAMINHOS ========== */
+.path {
+  position: absolute;
+  background: linear-gradient(135deg, #C19A6B 0%, #D2B48C 50%, #C19A6B 100%);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.horizontal-path {
+  width: 100%;
+  height: 50px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.vertical-path {
+  width: 50px;
+  height: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* ========== DECORAÇÕES ========== */
+.decoration {
+  position: absolute;
+  font-size: 2rem;
+  filter: drop-shadow(2px 4px 6px rgba(0, 0, 0, 0.4));
+  animation: sway 3s ease-in-out infinite;
+  z-index: 5;
+}
+
+.tree {
+  font-size: 2.5rem;
+}
+
+.rock {
+  font-size: 1.8rem;
+  animation: none;
+}
+
+.flower {
+  font-size: 1.5rem;
+  animation: bloom 4s ease-in-out infinite;
+}
+
+@keyframes sway {
+  0%, 100% {
+    transform: rotate(-2deg);
+  }
+  50% {
+    transform: rotate(2deg);
+  }
+}
+
+@keyframes bloom {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+/* ========== EDIFÍCIOS 3D ========== */
+.buildings-layer {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  z-index: 20;
+}
+
+.building-3d {
+  position: absolute;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform-origin: bottom center;
+}
+
+.building-3d.hovered {
+  transform: scale(1.15) translateY(-10px) !important;
+  z-index: 1000 !important;
+  filter: brightness(1.2);
+}
+
+.building-3d.selected {
+  animation: buildingSelect 0.5s ease;
+}
+
+@keyframes buildingSelect {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1) translateY(-5px);
+  }
+}
+
+/* ========== SOMBRA DO EDIFÍCIO ========== */
+.building-shadow {
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 30px;
+  background: radial-gradient(ellipse, rgba(0, 0, 0, 0.4) 0%, transparent 70%);
+  border-radius: 50%;
+  z-index: -1;
+}
+
+/* ========== ESTRUTURA DO EDIFÍCIO ========== */
+.building-structure {
+  position: relative;
+  width: 100px;
+  height: 120px;
+  transform-style: preserve-3d;
+  transition: all 0.3s ease;
+}
+
+/* Telhado */
+.building-roof {
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 60px solid transparent;
+  border-right: 60px solid transparent;
+  border-bottom: 40px solid #8B4513;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.4));
+}
+
+.building-roof::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -55px;
+  width: 110px;
+  height: 35px;
+  background: linear-gradient(180deg, #D2691E 0%, #8B4513 100%);
+  clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+}
+
+/* Corpo do edifício */
+.building-body {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90px;
+  height: 80px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, transparent 100%);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 
+    inset -5px -5px 10px rgba(0, 0, 0, 0.3),
+    inset 5px 5px 10px rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(0, 0, 0, 0.2);
+}
+
+.building-icon-large {
+  font-size: 3.5rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+  animation: buildingPulse 3s ease-in-out infinite;
+}
+
+@keyframes buildingPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+/* Frente do edifício (efeito 3D) */
+.building-front {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90px;
+  height: 15px;
+  background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.3) 100%);
+  border-radius: 0 0 8px 8px;
+}
+
+/* ========== TAMANHOS DOS EDIFÍCIOS ========== */
+.building-3d.small .building-structure {
+  width: 80px;
+  height: 100px;
+}
+
+.building-3d.small .building-body {
+  width: 70px;
+  height: 65px;
+}
+
+.building-3d.small .building-icon-large {
+  font-size: 2.5rem;
+}
+
+.building-3d.medium .building-structure {
+  width: 100px;
+  height: 120px;
+}
+
+.building-3d.large .building-structure {
+  width: 130px;
+  height: 150px;
+}
+
+.building-3d.large .building-body {
+  width: 120px;
+  height: 110px;
+}
+
+.building-3d.large .building-icon-large {
+  font-size: 4.5rem;
+}
+
+.building-3d.extra-large .building-structure {
+  width: 160px;
+  height: 180px;
+}
+
+.building-3d.extra-large .building-body {
+  width: 150px;
+  height: 140px;
+}
+
+.building-3d.extra-large .building-icon-large {
+  font-size: 5.5rem;
+}
+
+.building-3d.extra-large .building-roof {
+  border-left: 80px solid transparent;
+  border-right: 80px solid transparent;
+  border-bottom: 50px solid #8B4513;
+}
+
+/* ========== BADGES E INDICADORES ========== */
+.building-level-badge {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  color: #1a1a2e;
+  padding: 0.4rem 0.8rem;
+  border-radius: 20px;
+  font-weight: bold;
+  font-size: 0.9rem;
+  box-shadow: 0 4px 10px rgba(251, 191, 36, 0.6);
+  border: 2px solid white;
+  z-index: 10;
+}
+
+.building-locked {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.8);
+  padding: 1rem;
+  border-radius: 50%;
+  font-size: 2rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+}
+
+.construction-indicator {
+  position: absolute;
+  top: -15px;
+  left: -15px;
+  animation: constructionBounce 1s ease-in-out infinite;
+}
+
+.construction-icon {
+  font-size: 2rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+}
+
+@keyframes constructionBounce {
+  0%, 100% {
+    transform: translateY(0) rotate(-10deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(10deg);
+  }
+}
+
+/* ========== NOME DO EDIFÍCIO ========== */
+.building-name-tag {
+  position: absolute;
+  bottom: -50px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 0.6rem 1.2rem;
+  border-radius: 12px;
+  font-weight: bold;
+  white-space: nowrap;
+  opacity: 0;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  z-index: 100;
+}
+
+.building-3d:hover .building-name-tag {
+  opacity: 1;
+  bottom: -45px;
+}
+
+.building-level-tag {
+  font-size: 0.8rem;
+  color: #feca57;
+  margin-top: 0.2rem;
+}
+
+/* ========== MURALHAS ========== */
+.village-walls {
+  position: absolute;
+  width: 92%;
+  height: 72%;
+  left: 4%;
+  top: 19%;
+  pointer-events: none;
+  z-index: 15;
+}
+
+.wall-segment {
+  position: absolute;
+  background: linear-gradient(135deg, #708090, #4F5D6C);
+  box-shadow: 
+    inset 0 2px 4px rgba(255, 255, 255, 0.2),
+    0 4px 8px rgba(0, 0, 0, 0.5);
+}
+
+.wall-top {
+  width: 100%;
+  height: 20px;
+  top: 0;
+  border-radius: 10px 10px 0 0;
+  background: repeating-linear-gradient(
+    90deg,
+    #708090 0px,
+    #708090 30px,
+    #4F5D6C 30px,
+    #4F5D6C 40px
+  );
+}
+
+.wall-right {
+  width: 20px;
+  height: 100%;
+  right: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    #708090 0px,
+    #708090 30px,
+    #4F5D6C 30px,
+    #4F5D6C 40px
+  );
+}
+
+.wall-bottom {
+  width: 100%;
+  height: 20px;
+  bottom: 0;
+  border-radius: 0 0 10px 10px;
+  background: repeating-linear-gradient(
+    90deg,
+    #708090 0px,
+    #708090 30px,
+    #4F5D6C 30px,
+    #4F5D6C 40px
+  );
+}
+
+.wall-left {
+  width: 20px;
+  height: 100%;
+  left: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    #708090 0px,
+    #708090 30px,
+    #4F5D6C 30px,
+    #4F5D6C 40px
+  );
+}
+
+.wall-tower {
+  position: absolute;
+  font-size: 2.5rem;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5));
+  animation: towerPulse 4s ease-in-out infinite;
+}
+
+.tower-top-left { top: -20px; left: -20px; }
+.tower-top-right { top: -20px; right: -20px; }
+.tower-bottom-left { bottom: -20px; left: -20px; }
+.tower-bottom-right { bottom: -20px; right: -20px; }
+
+@keyframes towerPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+/* ========== PORTÃO ========== */
+.main-gate {
+  position: absolute;
+  bottom: 18%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 16;
+}
+
+.gate-structure {
+  font-size: 3rem;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5));
+}
+
+.gate-flag {
+  position: absolute;
+  top: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 2rem;
+  animation: flagWave 2s ease-in-out infinite;
+}
+
+@keyframes flagWave {
+  0%, 100% {
+    transform: translateX(-50%) rotate(-5deg);
+  }
+  50% {
+    transform: translateX(-50%) rotate(5deg);
+  }
+}
+
+/* ========== PAINEL DE DETALHES ========== */
+.building-details-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+.building-details-panel {
+  background: linear-gradient(135deg, rgba(26, 26, 46, 0.98), rgba(15, 52, 96, 0.98));
+  border: 3px solid #e94560;
+  border-radius: 24px;
+  padding: 2rem;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 0 60px rgba(233, 69, 96, 0.6);
+  animation: slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  backdrop-filter: blur(15px);
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.close-details {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 40px;
+  height: 40px;
+  background: rgba(239, 68, 68, 0.9);
+  border: none;
+  border-radius: 50%;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close-details:hover {
+  background: #ef4444;
+  transform: rotate(90deg) scale(1.1);
+}
+
+.details-header {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid rgba(233, 69, 96, 0.3);
+}
+
+.details-icon {
+  font-size: 5rem;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5));
+}
+
+.details-title h2 {
+  color: #feca57;
+  font-size: 2rem;
+  margin: 0;
+}
+
+.details-subtitle {
+  color: #ccc;
+  margin: 0.5rem 0 0 0;
+}
+
+.details-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 12px;
+  border-left: 3px solid rgba(233, 69, 96, 0.5);
+}
+
+.detail-label {
+  color: #aaa;
+  font-weight: 600;
+}
+
+.detail-value {
+  color: #feca57;
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+.level-value {
+  background: linear-gradient(135deg, #10b981, #06d6a0);
+  padding: 0.3rem 0.8rem;
+  border-radius: 8px;
+  color: white;
+}
+
+.details-divider {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(233, 69, 96, 0.5), transparent);
+  margin: 0.5rem 0;
+}
+
+.details-section-title {
+  color: #feca57;
+  font-size: 1.3rem;
+  margin: 0.5rem 0;
+}
+
+.cost-grid {
+  display: flex;
+  gap: 1rem;
+  justify-content: space-around;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+}
+
+.cost-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cost-icon {
+  font-size: 2rem;
+}
+
+.cost-amount {
+  color: #fff;
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.btn-upgrade {
+  width: 100%;
+  padding: 1.2rem;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #10b981, #06d6a0);
+  color: white;
+  font-weight: bold;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+  margin-top: 1rem;
+}
+
+.btn-upgrade:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.6);
+}
+
+/* ========== INFO BAR ========== */
+.village-info-bar {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: rgba(26, 26, 46, 0.95);
+  border: 2px solid rgba(233, 69, 96, 0.5);
+  border-radius: 16px;
+  padding: 1rem 1.5rem;
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+  z-index: 100;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(10px);
+}
+
+.village-name {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.village-icon {
+  font-size: 1.8rem;
+}
+
+.village-name-text {
+  color: #feca57;
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+.village-stats {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.stat-icon {
+  font-size: 1.3rem;
+}
+
+.stat-value {
+  color: white;
+  font-weight: 600;
+}
+
+/* ========== VIEW CONTROLS ========== */
+.view-controls {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  z-index: 100;
+}
+
+.view-btn {
+  width: 50px;
+  height: 50px;
+  background: rgba(26, 26, 46, 0.95);
+  border: 2px solid rgba(233, 69, 96, 0.5);
+  border-radius: 12px;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+.view-btn:hover {
+  background: rgba(233, 69, 96, 0.9);
+  border-color: #e94560;
+  transform: scale(1.1);
+}
+
+/* ========== LEGENDA ========== */
+.village-legend {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  background: rgba(26, 26, 46, 0.95);
+  border: 2px solid rgba(233, 69, 96, 0.3);
+  border-radius: 12px;
+  padding: 1rem;
+  z-index: 100;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  color: #ddd;
+  font-size: 0.9rem;
+}
+
+.legend-item:last-child {
+  margin-bottom: 0;
+}
+
+.legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid white;
+}
+
+.legend-dot.available {
+  background: #10b981;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.6);
+}
+
+.legend-dot.constructing {
+  background: #fbbf24;
+  box-shadow: 0 0 10px rgba(251, 191, 36, 0.6);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 1200px) {
+  .village-view-container {
+    height: 600px;
+  }
+
+  .building-3d {
+    transform: scale(0.8) !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .village-view-container {
+    height: 500px;
+  }
+
+  .village-info-bar {
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+  }
+
+  .building-details-panel {
+    padding: 1.5rem;
+  }
+
+  .details-icon {
+    font-size: 3.5rem;
+  }
+
+  .details-title h2 {
+    font-size: 1.5rem;
+  }
+
+  .building-3d {
+    transform: scale(0.7) !important;
+  }
+
+  .wall-tower {
+    font-size: 1.8rem;
+  }
+}
+
+/* ========== ANIMATIONS ========== */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
