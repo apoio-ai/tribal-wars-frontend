@@ -221,21 +221,20 @@ function App() {
   useEffect(() => {
     if (activeTab === 'map' && !map) loadMap();
     if (activeTab === 'battle' && npcVillages.length === 0) loadNPCVillages();
-    if (activeTab === 'battle' && battleHistory.length === 0) loadBattleHistory();
     if (activeTab === 'ranking' && !rankings) loadRankings(rankingType);
   }, [activeTab]);
 
   useEffect(() => {
-    if (activeTab === 'ranking') loadRankings(rankingType);
+    if (activeTab === 'ranking' && rankings) {
+      loadRankings(rankingType);
+    }
   }, [rankingType]);
 
   if (!isLoggedIn) {
     return (
       <div className="login-container">
         <div className="login-box">
-          <h1 className="title">⚔️ TRIBAL WARS</h1>
-          <p className="subtitle">Conquiste o Mundo Medieval!</p>
-          
+          <h1>⚔️ Tribal Wars</h1>
           {!isRegistering ? (
             <form onSubmit={handleLogin}>
               <input type="email" name="email" placeholder="Email" required />
@@ -305,14 +304,17 @@ function App() {
 
       <div className="content">
         {activeTab === 'overview' && (
-              <VillageView
-      village={village}
-      buildings={village.village.buildings}
-      onBuildingClick={(buildingKey) => {
-        handleBuild(buildingKey);
-      }}
-    />
           <div className="overview">
+            {/* Vista 3D da Aldeia */}
+            <VillageView
+              village={village}
+              buildings={village.village.buildings}
+              onBuildingClick={(buildingKey) => {
+                handleBuild(buildingKey);
+              }}
+            />
+
+            {/* Card de Boas-vindas */}
             <div className="card">
               <h2>🏛️ Bem-vindo, {user.username}!</h2>
               <p>Nível: {village.stats.level} | EXP: {village.stats.exp}/{village.stats.level * 100}</p>
@@ -322,6 +324,7 @@ function App() {
               <button onClick={handleClaimBonus} className="btn-primary">🎁 Coletar Bônus Diário</button>
             </div>
 
+            {/* Stats Grid */}
             <div className="stats-grid">
               <div className="stat-card">
                 <h3>⚔️ Ataques</h3>
@@ -407,16 +410,15 @@ function App() {
 
         {activeTab === 'map' && map && (
           <div className="map-section">
-            <h2>🗺️ Mapa (Tuas coordenadas: {map.myCoordinates.x}, {map.myCoordinates.y})</h2>
-            <div className="villages-list">
-              {map.nearbyVillages.map(village => (
-                <div key={village.id} className="nearby-village">
-                  <strong>{village.username}</strong> - {village.villageName}
-                  <br/>
-                  📍 ({village.coordinates.x}, {village.coordinates.y}) | 🏆 {village.points} pontos
-                </div>
-              ))}
-            </div>
+            <h2 className="section-title">🗺️ Mapa Mundial</h2>
+            
+            <MapComponent
+              myCoordinates={map.myCoordinates}
+              nearbyVillages={map.nearbyVillages}
+              onVillageClick={(village) => {
+                console.log('Aldeia clicada:', village);
+              }}
+            />
           </div>
         )}
 
