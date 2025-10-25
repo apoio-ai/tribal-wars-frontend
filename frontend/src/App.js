@@ -3,6 +3,7 @@ import * as api from './services/api';
 import './styles/App.css';
 import MapComponent from './components/MapComponent';
 import VillageView from './components/VillageView';
+import { buildingsData, troopsData, buildingKeyMap, troopKeyMap } from './gameData';
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -345,41 +346,65 @@ function App() {
           </div>
         )}
 
-        {activeTab === 'buildings' && (
-          <div className="buildings-grid">
-            {Object.entries(village.village.buildings).map(([building, level]) => (
-              <div key={building} className="building-card">
-                <h3>{building} - Nível {level}</h3>
-                <button onClick={() => handleBuild(building)} disabled={loading}>
-                  Melhorar
-                </button>
-              </div>
-            ))}
+       {activeTab === 'buildings' && (
+  <div className="buildings-grid">
+    {Object.entries(village.village.buildings).map(([building, level]) => {
+      const buildingKey = building.toLowerCase();
+      const buildingInfo = buildingsData[buildingKey] || buildingsData[buildingKeyMap[building]];
+      
+      return (
+        <div key={building} className="building-card">
+          <div style={{fontSize: '3rem', marginBottom: '0.5rem'}}>
+            {buildingInfo?.emoji || '🏛️'}
           </div>
-        )}
+          <h3>{buildingInfo?.name || building} - Nível {level}</h3>
+          <p style={{color: '#666', fontSize: '0.9rem', marginBottom: '1rem'}}>
+            {buildingInfo?.description}
+          </p>
+          <button onClick={() => handleBuild(building)} disabled={loading}>
+            Melhorar
+          </button>
+        </div>
+      );
+    })}
+  </div>
+)}
 
-        {activeTab === 'troops' && (
-          <div className="troops-section">
-            <h2>Suas Tropas</h2>
-            <div className="troops-list">
-              {Object.entries(village.village.troops).map(([troop, count]) => (
-                <div key={troop} className="troop-item">
-                  <span>{troop}: {count}</span>
-                  <input 
-                    type="number" 
-                    min="1" 
-                    max="100"
-                    placeholder="Quantidade"
-                    onChange={(e) => {
-                      const amount = e.target.value;
-                      if (amount) handleTrain(troop, amount);
-                    }}
-                  />
+    {activeTab === 'troops' && (
+  <div className="troops-section">
+    <h2>Suas Tropas</h2>
+    <div className="troops-list">
+      {Object.entries(village.village.troops).map(([troop, count]) => {
+        const troopKey = troop.toLowerCase();
+        const troopInfo = troopsData[troopKey] || troopsData[troopKeyMap[troop]];
+        
+        return (
+          <div key={troop} className="troop-item">
+            <div style={{display: 'flex', alignItems: 'center', gap: '1rem'}}>
+              <span style={{fontSize: '2rem'}}>{troopInfo?.emoji || '⚔️'}</span>
+              <div>
+                <div><strong>{troopInfo?.name || troop}</strong></div>
+                <div style={{color: '#666', fontSize: '0.9rem'}}>
+                  Quantidade: {count}
                 </div>
-              ))}
+              </div>
             </div>
+            <input 
+              type="number" 
+              min="1" 
+              max="100"
+              placeholder="Treinar"
+              onChange={(e) => {
+                const amount = e.target.value;
+                if (amount) handleTrain(troop, amount);
+              }}
+            />
           </div>
-        )}
+        );
+      })}
+    </div>
+  </div>
+)}
 
         {activeTab === 'battle' && (
           <div className="battle-section">
