@@ -605,47 +605,21 @@ function App() {
         </button>
       </div>
 
-      <div className="content">
-        {activeTab === 'overview' && (
-          <div className="overview">
-            {/* Vista da Aldeia com Imagens */}
-            <div className="village-view">
-              <h2 className="section-title">🏘️ Tua Aldeia</h2>
-              <div className="village-scene">
-                <div className="sky"></div>
-                <div className="village-buildings">
-                  {Object.entries(village.village.buildings).map(([building, level]) => {
-                    const buildingInfo = buildingsData[building];
-                    if (!buildingInfo) return null;
-                    
-                    const positions = {
-                      headquarters: { left: '45%', top: '30%' },
-                      barracks: { left: '25%', top: '45%' },
-                      farm: { left: '70%', top: '50%' },
-                      warehouse: { left: '60%', top: '70%' },
-                      wall: { left: '15%', top: '20%' },
-                      market: { left: '75%', top: '30%' },
-                      smithy: { left: '35%', top: '65%' },
-                      stable: { left: '55%', top: '45%' }
-                    };
+    <div className="content">
+  {activeTab === 'overview' && (
+    <div className="overview">
+      {/* Nova Vista 3D da Aldeia */}
+      <VillageView
+        village={village}
+        buildings={village.village.buildings}
+        onBuildingClick={(buildingKey) => {
+          console.log('Edifício clicado:', buildingKey);
+          // Se quiseres chamar a função de construir:
+          // handleBuild(buildingKey);
+        }}
+      />
 
-                    return (
-                      <div 
-                        key={building}
-                        className="village-building"
-                        style={positions[building]}
-                        title={`${buildingInfo.name} - Nível ${level}`}
-                      >
-                        <div className="building-icon-3d">{buildingInfo.emoji}</div>
-                        <div className="building-level-badge">{level}</div>
-                        <div className="building-name-label">{buildingInfo.name}</div>
-                      </div>
-                    );
-                  })}
-                </div>
-                <div className="ground"></div>
-              </div>
-            </div>
+      {/* Resto do overview (mantém as tuas cards de estatísticas) */}
 
             {/* Estatísticas do Jogador */}
             <div className="player-stats-card">
