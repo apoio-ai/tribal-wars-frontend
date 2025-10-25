@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import * as api from './services/api';
 import './styles/App.css';
+import MapComponent from './components/MapComponent';
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
