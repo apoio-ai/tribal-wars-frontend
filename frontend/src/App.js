@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import * as api from './services/api';
 import './styles/App.css';
 import MapComponent from './components/MapComponent';
+import VillageView from './components/VillageView';
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
